@@ -278,11 +278,8 @@ export default function Page() {
   }
 
   function onOpenLinkedIn() {
-    if (typeof window === "undefined") return;
-    const intent = "https://www.linkedin.com/feed/?shareActive=true&text=";
-    window.open(intent, "_blank", "noopener,noreferrer");
     tickStep("open-linkedin");
-    setChecklistNote("LinkedIn compose opened in a new tab. Paste the caption first (⌘V), then come back for step 5.");
+    setChecklistNote("LinkedIn opened in a new tab. Click 'Start a post', then paste the caption first (⌘V).");
   }
 
   function onDownloadPng() {
@@ -877,13 +874,15 @@ export default function Page() {
                               <div className="step-title">Open the LinkedIn composer</div>
                               <div className="step-sub">Opens in a new tab — keep this tab open.</div>
                             </div>
-                            <button
-                              type="button"
+                            <a
                               className="btn linkedin small"
+                              href="https://www.linkedin.com/feed/?shareActive=true"
+                              target="_blank"
+                              rel="noopener noreferrer"
                               onClick={onOpenLinkedIn}
                             >
                               Open LinkedIn ↗
-                            </button>
+                            </a>
                           </li>
 
                           <li className={checklistDone.has("paste-caption") ? "done" : ""}>
@@ -998,7 +997,6 @@ export default function Page() {
             <p className="ink">Masthead</p>
             <p>Editor-in-Chief · The Builder</p>
             <p>Photography · fal.ai</p>
-            <p>Lore Desk · Anthropic</p>
             <p>Source Wire · Apify</p>
           </div>
         </section>

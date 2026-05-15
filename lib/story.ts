@@ -137,10 +137,13 @@ function ensureReporterMentions(bundle: StoryBundle): StoryBundle {
 async function callModel(userPrompt: string, system: string): Promise<string> {
   const res = await client.messages.create({
     model: "claude-opus-4-7",
-    max_tokens: 2000,
+    max_tokens: 6000,
     system,
     messages: [{ role: "user", content: userPrompt }],
   });
+  if (res.stop_reason === "max_tokens") {
+    console.warn("[story] model hit max_tokens — output likely truncated");
+  }
   return res.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
     .map((b) => b.text)
@@ -252,8 +255,16 @@ export async function generateStories(profile: LinkedInProfile): Promise<StoryBu
   }
 
   const userPrompt = buildStoryUserPrompt(profile);
-  const text = await callModel(userPrompt, STUDIO_SYSTEM_PROMPT);
-  let bundle = parseBundle(text);
+  let text = await callModel(userPrompt, STUDIO_SYSTEM_PROMPT);
+  let bundle: StoryBundle;
+  try {
+    bundle = parseBundle(text);
+  } catch (e) {
+    console.warn("[story] first parse failed, retrying with stricter JSON instruction:", e);
+    const fixPrompt = `${userPrompt}\n\nPREVIOUS ATTEMPT WAS NOT VALID JSON or was truncated. Return ONLY the JSON object, nothing else — no prose, no fences, no commentary. Keep every string concise enough to fit the full payload in one response.`;
+    text = await callModel(fixPrompt, STUDIO_SYSTEM_PROMPT);
+    bundle = parseBundle(text);
+  }
 
   let missing = findMissingMegathon(bundle);
   if (missing.length > 0) {
