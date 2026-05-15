@@ -118,12 +118,12 @@ export default function Page() {
     (async () => {
       const tcUrl = await fetchSignedOgUrl({
         imageUrl,
-        title: stories.headlines[0] ?? selectedDirection.hook,
+        title: selectedDirection.headlines[0] ?? selectedDirection.hook,
         angle: selectedDirection.angle,
-        headlines: stories.headlines,
+        headlines: selectedDirection.headlines,
         hook: selectedDirection.hook,
         recommendationReason: stories.recommendationReason,
-        byline: `By ${stories.reporter.parodyName}`,
+        byline: `By ${selectedDirection.reporter.parodyName}`,
       });
       if (!cancelled) setTcPostUrl(tcUrl);
     })();
@@ -189,12 +189,12 @@ export default function Page() {
       setChecklistNote(null);
       const ogInput = {
         imageUrl: res.imageUrl,
-        title: stories.headlines[0] ?? selectedDirection.hook,
+        title: selectedDirection.headlines[0] ?? selectedDirection.hook,
         angle: selectedDirection.angle,
-        headlines: stories.headlines,
+        headlines: selectedDirection.headlines,
         hook: selectedDirection.hook,
         recommendationReason: stories.recommendationReason,
-        byline: `By ${stories.reporter.parodyName}`,
+        byline: `By ${selectedDirection.reporter.parodyName}`,
       };
       const tcUrl = await fetchSignedOgUrl(ogInput);
       setTcPostUrl(tcUrl);
@@ -266,9 +266,9 @@ export default function Page() {
   }
 
   async function onCopyCaption() {
-    if (!stories?.linkedinCaption || typeof navigator === "undefined") return;
+    if (!selectedDirection?.linkedinCaption || typeof navigator === "undefined") return;
     try {
-      await navigator.clipboard.writeText(stories.linkedinCaption);
+      await navigator.clipboard.writeText(selectedDirection.linkedinCaption);
       tickStep("copy-caption");
       setChecklistNote("Caption copied. Paste it as the FIRST thing in LinkedIn (⌘V / Ctrl+V).");
     } catch (err) {
@@ -637,7 +637,7 @@ export default function Page() {
                     <span>Edition · {issueNo}</span>
                   </div>
 
-                  {stories.headlines.map((h, i) => (
+                  {selectedDirection.headlines.map((h, i) => (
                     <div key={i} className="headline-item">
                       <div className="h-num">
                         <span className="big">{String(i + 1).padStart(2, "0")}</span>
@@ -821,7 +821,7 @@ export default function Page() {
                     </div>
                     </div>
 
-                    {tcPostUrl && stories?.linkedinCaption && (
+                    {tcPostUrl && selectedDirection?.linkedinCaption && (
                       <div className="ship-it">
                         <div className="ship-head">
                           <div>
@@ -838,7 +838,7 @@ export default function Page() {
 
                         <div className="caption-box">
                           <div className="caption-label">Caption (this is what people will read)</div>
-                          <pre className="caption-text">{stories.linkedinCaption}</pre>
+                          <pre className="caption-text">{selectedDirection.linkedinCaption}</pre>
                         </div>
 
                         <ol className="checklist">
@@ -912,16 +912,16 @@ export default function Page() {
                             </button>
                             <div className="step-body">
                               <div className="step-title">
-                                Tag @{stories.reporter.realName} properly
+                                Tag @{selectedDirection.reporter.realName} properly
                               </div>
                               <div className="step-sub">
-                                Delete the literal &ldquo;@{stories.reporter.realName}&rdquo;, retype{" "}
-                                <code>@{stories.reporter.realName}</code>, and pick them from
+                                Delete the literal &ldquo;@{selectedDirection.reporter.realName}&rdquo;, retype{" "}
+                                <code>@{selectedDirection.reporter.realName}</code>, and pick them from
                                 LinkedIn&apos;s dropdown so the mention actually links.
-                                {stories.reporter.reason && (
+                                {selectedDirection.reporter.reason && (
                                   <>
                                     {" "}
-                                    <em>(Picked because: {stories.reporter.reason})</em>
+                                    <em>(Picked because: {selectedDirection.reporter.reason})</em>
                                   </>
                                 )}
                               </div>

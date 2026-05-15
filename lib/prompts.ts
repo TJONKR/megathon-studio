@@ -139,45 +139,44 @@ Generate THREE distinct story directions for this person. Each direction MUST:
 
 Then pick the ONE you recommend and explain in ≤25 words why it lands hardest for THIS person — lead with the profile detail, mention the MEGATHON touch only if relevant.
 
-Then write THREE viral-flavoured headlines for the recommended direction. Headlines should sound like screenshotted EU tech-press chaos — specific to THIS person, dramatic, slightly emotional, never libellous, no real publication names. The person and their work should be the subject of every headline. EVERY headline must contain the word "MEGATHON" somewhere (as a dateline, venue, byline, or in-headline reference) — three different MEGATHON framings across the three headlines is ideal (e.g. one as dateline, one as venue mid-headline, one as the closing punchline).
+For EACH of the three directions, write a fully-formed press dispatch — every direction is shippable on its own:
 
-Then PICK A REPORTER who supposedly broke this story. Pick from this list of real TechCrunch staff (each has a beat — match the reporter's beat to the recommended direction's angle):
+  HEADLINES (per direction) — THREE viral-flavoured headlines that match THAT direction's angle/hook. Headlines should sound like screenshotted EU tech-press chaos — specific to THIS person, dramatic, slightly emotional, never libellous, no real publication names. The person and their work should be the subject of every headline. EVERY headline must contain the word "MEGATHON" somewhere — three different MEGATHON framings per direction is ideal (one as dateline, one as venue mid-headline, one as the closing punchline). Headlines from direction A must read distinctly from B's and C's.
+
+  REPORTER (per direction) — PICK A REPORTER who supposedly broke that direction's story. Each direction should have its own reporter, matched to that direction's angle/beat. You may reuse a reporter only if the angle truly demands it; prefer three different reporters.
 ${REPORTERS_BLOCK}
+  Output the reporter's realName EXACTLY as listed (spelling, casing, hyphens — must match one of the names above letter-for-letter; the system tags this person on LinkedIn so it has to resolve). Then invent a clearly-parody twist of that name to use as the byline on the rendered front-page image. Rules for the parodyName: sounds phonetically similar to the realName but OBVIOUSLY fake (e.g. "Anna Heim" → "Anya Heimlich"; "Kyle Wiggers" → "Kyle Wigglers"; "Dominic-Madori Davis" → "Domino-Mallory Davis"; "Lorenzo Franceschi-Bicchierai" → "Lorenzo Francheesy-Bicchierino"). Must stay believable as a person's name, two-word minimum, never identical to the realName.
 
-Output the reporter's realName EXACTLY as listed (spelling, casing, hyphens — must match one of the names above letter-for-letter; the system tags this person on LinkedIn so it has to resolve).
-
-Then invent a clearly-parody twist of that name to use as the byline on the rendered front-page image. Rules for the parodyName:
-- Sounds phonetically similar to the realName but is OBVIOUSLY a fake (one or two letters changed, or a small word swap, or a punny tweak). Examples of the transform style: "Anna Heim" → "Anya Heimlich"; "Kyle Wiggers" → "Kyle Wigglers"; "Dominic-Madori Davis" → "Domino-Mallory Davis"; "Lucas Ropek" → "Lukas Ropecake"; "Lorenzo Franceschi-Bicchierai" → "Lorenzo Francheesy-Bicchierino"; "Connie Loizos" → "Cosmo Loizos".
-- Must stay believable as a person's name — not a joke phrase like "Anna Headline".
-- Two-word minimum (first + last). Don't add titles or middle initials.
-- Don't use the realName verbatim — every parodyName MUST differ from its realName by at least one obvious letter/word change.
-
-Then write a LINKEDIN POST CAPTION the subject will paste alongside the image. Rules for the caption:
-- 5–8 short lines, line breaks between beats — this reads on a phone.
-- Voice: the SUBJECT posting it themselves with theatrical mock-modesty ("ok so apparently this happened…"), not a third-party announcement.
-- Open with a one-line hook riffing on the recommended headline. Then 2–3 lines that escalate the absurd premise from the recommended direction. Reference at least one concrete profile detail.
-- Include the literal phrase "filed by @<reporter realName>" on its own line near the bottom — substitute the realName you picked above, EXACTLY as listed (e.g. "filed by @Kyle Wiggers"). The subject will convert it into a real LinkedIn mention when posting.
-- Include a "MEGATHON 2026 · Amsterdam" dateline line.
-- Make the parody/fiction framing UNMISTAKABLE — e.g. "(this is fiction, no founders were harmed)" or "(100% parody, 0% verified)" — so nobody mistakes it for real news.
-- NO hashtags anywhere in the caption. Not at the end, not inline, not anywhere. Hashtags read as cringe LinkedIn-engagement-bait and break the parody voice.
-- No emojis are required but 1–3 well-placed ones are fine. No links. No real publication names.
+  LINKEDIN CAPTION (per direction) — the subject's first-person post for THAT direction. Rules:
+  - 5–8 short lines, line breaks between beats — reads on a phone.
+  - Voice: the SUBJECT posting it themselves with theatrical mock-modesty ("ok so apparently this happened…"), not a third-party announcement.
+  - Open with a one-line hook riffing on THAT direction's first headline. Then 2–3 lines that escalate THAT direction's absurd premise. Reference at least one concrete profile detail.
+  - Include the literal phrase "filed by @<reporter realName>" on its own line near the bottom, EXACTLY matching that direction's reporter realName.
+  - Include a "MEGATHON 2026 · Amsterdam" dateline line.
+  - Make the parody/fiction framing UNMISTAKABLE — e.g. "(this is fiction, no founders were harmed)" or "(100% parody, 0% verified)".
+  - NO hashtags. 1–3 emojis OK. No links. No real publication names.
 
 Return STRICT JSON ONLY with this exact shape:
 {
   "directions": [
-    { "id": "a", "angle": "string (2-4 word label like 'cursed demo' or 'marathon founder')", "hook": "string (1 sentence, the story premise — punchy, ≤30 words)", "why": "string (1 sentence on what makes this fit THIS person, references a real profile detail)" },
-    { "id": "b", "angle": "...", "hook": "...", "why": "..." },
-    { "id": "c", "angle": "...", "hook": "...", "why": "..." }
+    {
+      "id": "a",
+      "angle": "string (2-4 word label like 'cursed demo' or 'marathon founder')",
+      "hook": "string (1 sentence, the story premise — punchy, ≤30 words)",
+      "why": "string (1 sentence on what makes this fit THIS person, references a real profile detail)",
+      "headlines": ["string", "string", "string"],
+      "reporter": {
+        "realName": "string — must match one of the listed TechCrunch reporter names letter-for-letter",
+        "parodyName": "string — your clearly-fictional twist of the realName, used as the byline",
+        "reason": "string ≤20 words — why this reporter's beat fits THIS direction's angle"
+      },
+      "linkedinCaption": "string (multi-line LinkedIn caption for THIS direction — real newlines, includes the @<reporter realName> mention. NO hashtags.)"
+    },
+    { "id": "b", "angle": "...", "hook": "...", "why": "...", "headlines": [...], "reporter": {...}, "linkedinCaption": "..." },
+    { "id": "c", "angle": "...", "hook": "...", "why": "...", "headlines": [...], "reporter": {...}, "linkedinCaption": "..." }
   ],
   "recommendedId": "a" | "b" | "c",
-  "recommendationReason": "string ≤25 words",
-  "headlines": ["string", "string", "string"],
-  "reporter": {
-    "realName": "string — must match one of the listed TechCrunch reporter names letter-for-letter",
-    "parodyName": "string — your clearly-fictional twist of the realName, used as the rendered image byline",
-    "reason": "string ≤20 words — one line on why this reporter's beat fits the recommended story angle"
-  },
-  "linkedinCaption": "string (the multi-line LinkedIn post text — use real newline characters between lines, include the @<reporter realName> mention as specified. NO hashtags.)"
+  "recommendationReason": "string ≤25 words"
 }`;
 }
 

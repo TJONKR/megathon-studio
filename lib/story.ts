@@ -4,26 +4,26 @@ import type { LinkedInProfile } from "./apify";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-export type StoryDirection = {
-  id: string;
-  angle: string;
-  hook: string;
-  why: string;
-};
-
 export type Reporter = {
   realName: string;
   parodyName: string;
   reason?: string;
 };
 
+export type StoryDirection = {
+  id: string;
+  angle: string;
+  hook: string;
+  why: string;
+  headlines: string[];
+  reporter: Reporter;
+  linkedinCaption: string;
+};
+
 export type StoryBundle = {
   directions: StoryDirection[];
   recommendedId: string;
   recommendationReason: string;
-  headlines: string[];
-  reporter: Reporter;
-  linkedinCaption: string;
 };
 
 function extractJson(text: string): string {
@@ -41,9 +41,10 @@ function findMissingMegathon(bundle: StoryBundle): string[] {
   const issues: string[] = [];
   bundle.directions.forEach((d, i) => {
     if (!MEGATHON_RE.test(d.hook)) issues.push(`direction[${i}].hook is missing MEGATHON`);
-  });
-  bundle.headlines.forEach((h, i) => {
-    if (!MEGATHON_RE.test(h)) issues.push(`headlines[${i}] is missing MEGATHON`);
+    (d.headlines ?? []).forEach((h, j) => {
+      if (!MEGATHON_RE.test(h))
+        issues.push(`direction[${i}].headlines[${j}] is missing MEGATHON`);
+    });
   });
   return issues;
 }
@@ -51,14 +52,15 @@ function findMissingMegathon(bundle: StoryBundle): string[] {
 function ensureMegathon(bundle: StoryBundle): StoryBundle {
   return {
     ...bundle,
-    directions: bundle.directions.map((d) =>
-      MEGATHON_RE.test(d.hook)
-        ? d
-        : { ...d, hook: `${d.hook.replace(/[.!?]?\s*$/, "")} — filed from MEGATHON 2026, Amsterdam.` },
-    ),
-    headlines: bundle.headlines.map((h) =>
-      MEGATHON_RE.test(h) ? h : `${h.replace(/\s*$/, "")} — MEGATHON 2026`,
-    ),
+    directions: bundle.directions.map((d) => ({
+      ...d,
+      hook: MEGATHON_RE.test(d.hook)
+        ? d.hook
+        : `${d.hook.replace(/[.!?]?\s*$/, "")} — filed from MEGATHON 2026, Amsterdam.`,
+      headlines: (d.headlines ?? []).map((h) =>
+        MEGATHON_RE.test(h) ? h : `${h.replace(/\s*$/, "")} — MEGATHON 2026`,
+      ),
+    })),
   };
 }
 
@@ -103,22 +105,32 @@ function makeFallbackParody(realName: string): string {
   return `${firstTwist} ${lastTwist}`;
 }
 
-function ensureReporterMention(bundle: StoryBundle): StoryBundle {
-  const tag = `@${bundle.reporter.realName}`;
-  const tagRe = new RegExp(
-    `@\\s*${bundle.reporter.realName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\\\s+/g, "\\s+")}`,
-    "i",
-  );
-  if (tagRe.test(bundle.linkedinCaption)) return bundle;
-  const lines = bundle.linkedinCaption.split("\n");
+function ensureReporterMentionIn(direction: StoryDirection): StoryDirection {
+  const tag = `@${direction.reporter.realName}`;
+  const escaped = direction.reporter.realName
+    .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/\\\s+/g, "\\s+");
+  const tagRe = new RegExp(`@\\s*${escaped}`, "i");
+  if (tagRe.test(direction.linkedinCaption)) return direction;
+  const lines = direction.linkedinCaption.split("\n");
   const hashtagIdx = lines.findIndex((l) => /(^|\s)#\w/.test(l));
   const insertAt = hashtagIdx === -1 ? lines.length : hashtagIdx;
   const before = lines.slice(0, insertAt);
   const after = lines.slice(insertAt);
-  const padded = before.length && before[before.length - 1].trim() !== "" ? [...before, ""] : before;
+  const padded =
+    before.length && before[before.length - 1].trim() !== ""
+      ? [...before, ""]
+      : before;
+  return {
+    ...direction,
+    linkedinCaption: [...padded, `filed by ${tag}`, ...after].join("\n"),
+  };
+}
+
+function ensureReporterMentions(bundle: StoryBundle): StoryBundle {
   return {
     ...bundle,
-    linkedinCaption: [...padded, `filed by ${tag}`, ...after].join("\n"),
+    directions: bundle.directions.map(ensureReporterMentionIn),
   };
 }
 
@@ -135,10 +147,13 @@ async function callModel(userPrompt: string, system: string): Promise<string> {
     .join("\n");
 }
 
-function fallbackCaption(p: Partial<StoryBundle>, reporter: Reporter): string {
+function fallbackCaption(
+  direction: { headlines?: string[]; hook?: string },
+  reporter: Reporter,
+): string {
   const headline =
-    (p.headlines && p.headlines[0]) ||
-    (p.directions && p.directions[0]?.hook) ||
+    direction.headlines?.[0] ||
+    direction.hook ||
     "Something absurd allegedly happened at MEGATHON 2026.";
   return [
     "ok so apparently this happened…",
@@ -161,6 +176,45 @@ function stripHashtags(caption: string): string {
     .trim();
 }
 
+type LooseDirection = {
+  id?: string;
+  angle?: string;
+  hook?: string;
+  why?: string;
+  headlines?: unknown;
+  reporter?: Reporter;
+  linkedinCaption?: string;
+};
+
+function normalizeDirection(raw: LooseDirection, idx: number): StoryDirection {
+  const id = (typeof raw.id === "string" && raw.id.trim()) || ["a", "b", "c"][idx] || `d${idx}`;
+  const angle = (typeof raw.angle === "string" && raw.angle.trim()) || "story";
+  const hook = (typeof raw.hook === "string" && raw.hook.trim()) || "An absurd thing allegedly happened at MEGATHON 2026.";
+  const why = (typeof raw.why === "string" && raw.why.trim()) || "Pulled from the subject's profile.";
+
+  const headlines = Array.isArray(raw.headlines)
+    ? raw.headlines.filter((h): h is string => typeof h === "string" && h.trim().length > 0)
+    : [];
+  while (headlines.length < 3) headlines.push(`${hook} — MEGATHON 2026`);
+
+  const reporter = normalizeReporter(raw.reporter, headlines[0] ?? hook);
+
+  const rawCaption =
+    typeof raw.linkedinCaption === "string" && raw.linkedinCaption.trim().length > 0
+      ? raw.linkedinCaption
+      : fallbackCaption({ headlines, hook }, reporter);
+
+  return {
+    id,
+    angle,
+    hook,
+    why,
+    headlines,
+    reporter,
+    linkedinCaption: stripHashtags(rawCaption),
+  };
+}
+
 function parseBundle(text: string): StoryBundle {
   const raw = extractJson(text);
   let parsed: unknown;
@@ -170,22 +224,26 @@ function parseBundle(text: string): StoryBundle {
     console.error("[story] failed to parse JSON:", text);
     throw new Error("Story model returned malformed JSON.");
   }
-  const p = parsed as Partial<StoryBundle>;
-  if (
-    !p.directions ||
-    !Array.isArray(p.directions) ||
-    p.directions.length === 0 ||
-    !p.recommendedId ||
-    !p.headlines
-  ) {
-    throw new Error("Story model returned incomplete payload.");
+  const p = parsed as {
+    directions?: LooseDirection[];
+    recommendedId?: string;
+    recommendationReason?: string;
+  };
+  if (!p.directions || !Array.isArray(p.directions) || p.directions.length === 0) {
+    throw new Error("Story model returned no directions.");
   }
-  const reporter = normalizeReporter(p.reporter, p.headlines?.[0]);
-  const rawCaption =
-    typeof p.linkedinCaption === "string" && p.linkedinCaption.trim().length > 0
-      ? p.linkedinCaption
-      : fallbackCaption(p, reporter);
-  return { ...(p as StoryBundle), reporter, linkedinCaption: stripHashtags(rawCaption) };
+  const directions = p.directions.map((d, i) => normalizeDirection(d, i));
+  const recommendedId =
+    typeof p.recommendedId === "string" &&
+    directions.some((d) => d.id === p.recommendedId)
+      ? p.recommendedId
+      : directions[0]!.id;
+  const recommendationReason =
+    typeof p.recommendationReason === "string" && p.recommendationReason.trim().length > 0
+      ? p.recommendationReason
+      : "Editor's pick: leans hardest into this subject's actual profile.";
+
+  return { directions, recommendedId, recommendationReason };
 }
 
 export async function generateStories(profile: LinkedInProfile): Promise<StoryBundle> {
@@ -214,7 +272,7 @@ export async function generateStories(profile: LinkedInProfile): Promise<StoryBu
     }
   }
 
-  bundle = ensureReporterMention(bundle);
+  bundle = ensureReporterMentions(bundle);
 
   return bundle;
 }
