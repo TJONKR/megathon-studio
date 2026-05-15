@@ -6,6 +6,7 @@ import { generateImage, type ImageMode } from "@/lib/image";
 import { fal } from "@/lib/fal";
 import { checkLimit, limitError } from "@/lib/limits";
 import { buildSignedOgUrl, type OgPostInput } from "@/lib/og-params";
+import { publishEntry, isWallConfigured } from "@/lib/wall";
 
 export type EnrichResult =
   | { ok: true; profile: LinkedInProfile; stories: StoryBundle }
@@ -110,6 +111,33 @@ export async function uploadReferenceImage(dataUrl: string): Promise<UploadResul
 export type SignedOgResult =
   | { ok: true; url: string }
   | { ok: false; error: string };
+
+export type PublishResult =
+  | { ok: true; id: string }
+  | { ok: false; error: string };
+
+export async function publishToWall(input: {
+  og: OgPostInput;
+  subjectName?: string;
+  subjectPhotoUrl?: string;
+}): Promise<PublishResult> {
+  try {
+    if (!isWallConfigured()) {
+      return { ok: false, error: "Wall not configured (Upstash env missing)." };
+    }
+    const entry = await publishEntry({
+      imageUrl: input.og.imageUrl,
+      subjectName: input.subjectName,
+      subjectPhotoUrl: input.subjectPhotoUrl,
+      og: input.og,
+    });
+    return { ok: true, id: entry.id };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[publishToWall] error:", err);
+    return { ok: false, error: msg };
+  }
+}
 
 export async function signOgUrl(input: OgPostInput): Promise<SignedOgResult> {
   try {

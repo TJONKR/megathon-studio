@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import {
   enrichAndGenerate,
   makeImage,
+  publishToWall,
   signOgUrl,
   uploadReferenceImage,
   type EnrichResult,
@@ -186,7 +187,7 @@ export default function Page() {
       setTcPostLoading(true);
       setChecklistDone(new Set());
       setChecklistNote(null);
-      const tcUrl = await fetchSignedOgUrl({
+      const ogInput = {
         imageUrl: res.imageUrl,
         title: stories.headlines[0] ?? selectedDirection.hook,
         angle: selectedDirection.angle,
@@ -194,8 +195,14 @@ export default function Page() {
         hook: selectedDirection.hook,
         recommendationReason: stories.recommendationReason,
         byline: `By ${stories.reporter.parodyName}`,
-      });
+      };
+      const tcUrl = await fetchSignedOgUrl(ogInput);
       setTcPostUrl(tcUrl);
+      publishToWall({
+        og: ogInput,
+        subjectName: profile.name,
+        subjectPhotoUrl: profile.photoUrl,
+      }).catch((err) => console.warn("[publishToWall] failed:", err));
       if (typeof window !== "undefined") {
         requestAnimationFrame(() => {
           document
@@ -273,9 +280,9 @@ export default function Page() {
   function onOpenLinkedIn() {
     if (typeof window === "undefined") return;
     const intent = "https://www.linkedin.com/feed/?shareActive=true&text=";
-    window.open(intent, "linkedin-share", "noopener,noreferrer,width=720,height=820");
+    window.open(intent, "_blank", "noopener,noreferrer");
     tickStep("open-linkedin");
-    setChecklistNote("LinkedIn compose opened. Paste the caption first (⌘V), then come back for step 5.");
+    setChecklistNote("LinkedIn compose opened in a new tab. Paste the caption first (⌘V), then come back for step 5.");
   }
 
   function onDownloadPng() {
@@ -312,7 +319,9 @@ export default function Page() {
           Megaton<span className="stop">.</span>Studio
         </div>
         <div className="masthead-side right">
-          <div className="ink">Intl. Edition</div>
+          <div className="ink">
+            <a href="/wall">The Wall →</a>
+          </div>
           <div className="dim">Press · Hackathon · Parody</div>
           <div className="dim">€0 · Forever Free</div>
         </div>
@@ -866,7 +875,7 @@ export default function Page() {
                             </button>
                             <div className="step-body">
                               <div className="step-title">Open the LinkedIn composer</div>
-                              <div className="step-sub">Opens in a new window — keep this tab open.</div>
+                              <div className="step-sub">Opens in a new tab — keep this tab open.</div>
                             </div>
                             <button
                               type="button"

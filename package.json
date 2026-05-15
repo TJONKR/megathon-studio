@@ -10,6 +10,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.40.0",
     "@fal-ai/client": "^1.6.4",
+    "@upstash/redis": "^1.38.0",
     "@vercel/og": "^0.11.1",
     "next": "^15.1.0",
     "react": "^19.0.0",
