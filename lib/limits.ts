@@ -22,10 +22,10 @@ const PER_IP_HOURLY_CAPS: Record<LimitKey, number> = {
 };
 
 const PER_IP_DAILY_CAPS: Record<LimitKey, number> = {
-  enrich: 20,
-  image: 40,
-  upload: 80,
-  sign: 200,
+  enrich: 40,
+  image: 80,
+  upload: 160,
+  sign: 400,
 };
 
 // Global daily caps across all IPs — last-line-of-defense bill ceiling.
