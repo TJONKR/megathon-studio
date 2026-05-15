@@ -147,6 +147,17 @@ For EACH of the three directions, write a fully-formed press dispatch — every 
 ${REPORTERS_BLOCK}
   Output the reporter's realName EXACTLY as listed (spelling, casing, hyphens — must match one of the names above letter-for-letter; the system tags this person on LinkedIn so it has to resolve). Then invent a clearly-parody twist of that name to use as the byline on the rendered front-page image. Rules for the parodyName: sounds phonetically similar to the realName but OBVIOUSLY fake (e.g. "Anna Heim" → "Anya Heimlich"; "Kyle Wiggers" → "Kyle Wigglers"; "Dominic-Madori Davis" → "Domino-Mallory Davis"; "Lorenzo Franceschi-Bicchierai" → "Lorenzo Francheesy-Bicchierino"). Must stay believable as a person's name, two-word minimum, never identical to the realName.
 
+  ARTICLE BODY (per direction) — the actual prose body of the fake press dispatch for THAT direction. This is what appears under the headline on the rendered article card, so it must READ AS A COHERENT FAKE NEWS STORY — not a list, not meta-commentary, not a recap of the headlines.
+
+  Rules for the body:
+  - Exactly THREE short paragraphs, separated by a blank line. ~40–70 words each. Total under 220 words.
+  - Paragraph 1 — the lede: open with the subject's full name and current role, then state the (absurd, fictional) news in one sentence. Anchor it with MEGATHON as the dateline/venue. Sound like a TechCrunch lede.
+  - Paragraph 2 — the colour: escalate the premise with ONE invented detail and ONE concrete real profile detail (a post topic, a phrase they use, a specific bit of their career). Land a fake quote or a fake "sources told Megaton Studio…" line — the fictional source is fine, but the sourcing has to sound like real reporting, not a wink at the audience.
+  - Paragraph 3 — the kicker: a one-or-two-sentence closing beat that escalates one final time and lands a punchline. Can reference a MEGATHON beat (finals, mentor session, 46-hour build) if it fits, but it doesn't have to.
+  - Voice: deadpan tech-press, NOT zany. The comedy lives in the specificity, not in jokes about being a parody. Never break the fourth wall ("this is fiction", "no founders were harmed" — that belongs in the LinkedIn caption, not the body).
+  - Do NOT recap or list the three headlines. Do NOT repeat the hook verbatim. Do NOT include the phrase "sources close to the matter — none of whom exist" — write fresh sourcing every time.
+  - Use real newlines between paragraphs (not literal "\\n").
+
   LINKEDIN CAPTION (per direction) — the subject's first-person post for THAT direction. Rules:
   - 5–8 short lines, line breaks between beats — reads on a phone.
   - Voice: the SUBJECT posting it themselves with theatrical mock-modesty ("ok so apparently this happened…"), not a third-party announcement.
@@ -165,6 +176,7 @@ Return STRICT JSON ONLY with this exact shape:
       "hook": "string (1 sentence, the story premise — punchy, ≤30 words)",
       "why": "string (1 sentence on what makes this fit THIS person, references a real profile detail)",
       "headlines": ["string", "string", "string"],
+      "body": "string — exactly 3 short paragraphs separated by blank lines, deadpan tech-press prose, see ARTICLE BODY rules above",
       "reporter": {
         "realName": "string — must match one of the listed TechCrunch reporter names letter-for-letter",
         "parodyName": "string — your clearly-fictional twist of the realName, used as the byline",
@@ -172,8 +184,8 @@ Return STRICT JSON ONLY with this exact shape:
       },
       "linkedinCaption": "string (multi-line LinkedIn caption for THIS direction — real newlines, includes the @<reporter realName> mention. NO hashtags.)"
     },
-    { "id": "b", "angle": "...", "hook": "...", "why": "...", "headlines": [...], "reporter": {...}, "linkedinCaption": "..." },
-    { "id": "c", "angle": "...", "hook": "...", "why": "...", "headlines": [...], "reporter": {...}, "linkedinCaption": "..." }
+    { "id": "b", "angle": "...", "hook": "...", "why": "...", "headlines": [...], "body": "...", "reporter": {...}, "linkedinCaption": "..." },
+    { "id": "c", "angle": "...", "hook": "...", "why": "...", "headlines": [...], "body": "...", "reporter": {...}, "linkedinCaption": "..." }
   ],
   "recommendedId": "a" | "b" | "c",
   "recommendationReason": "string ≤25 words"

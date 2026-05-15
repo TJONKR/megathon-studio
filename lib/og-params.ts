@@ -6,8 +6,7 @@ export type OgPostInput = {
   title: string;
   angle: string;
   headlines: string[];
-  hook: string;
-  recommendationReason: string;
+  body: string;
   byline: string;
 };
 
@@ -39,14 +38,7 @@ function nowDateline(): string {
  * a hostile sender can't blow up the renderer.
  */
 export async function buildSignedOgUrl(input: OgPostInput): Promise<string> {
-  const body = [
-    clamp(input.hook, MAX_LEN.body / 3),
-    `Sources close to the matter — none of whom exist — confirm: ${clamp(input.recommendationReason, MAX_LEN.body / 3)}`,
-    input.headlines
-      .slice(0, 3)
-      .map((h) => `"${clamp(h, MAX_LEN.title)}"`)
-      .join("  ·  "),
-  ].join("\n\n").slice(0, MAX_LEN.body);
+  const body = clamp(input.body.trim(), MAX_LEN.body);
 
   const sidebarItems =
     input.headlines.length > 1

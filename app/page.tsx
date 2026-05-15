@@ -121,8 +121,7 @@ export default function Page() {
         title: selectedDirection.headlines[0] ?? selectedDirection.hook,
         angle: selectedDirection.angle,
         headlines: selectedDirection.headlines,
-        hook: selectedDirection.hook,
-        recommendationReason: stories.recommendationReason,
+        body: selectedDirection.body,
         byline: `By ${selectedDirection.reporter.parodyName}`,
       });
       if (!cancelled) setTcPostUrl(tcUrl);
@@ -192,8 +191,7 @@ export default function Page() {
         title: selectedDirection.headlines[0] ?? selectedDirection.hook,
         angle: selectedDirection.angle,
         headlines: selectedDirection.headlines,
-        hook: selectedDirection.hook,
-        recommendationReason: stories.recommendationReason,
+        body: selectedDirection.body,
         byline: `By ${selectedDirection.reporter.parodyName}`,
       };
       const tcUrl = await fetchSignedOgUrl(ogInput);

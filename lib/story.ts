@@ -16,6 +16,7 @@ export type StoryDirection = {
   hook: string;
   why: string;
   headlines: string[];
+  body: string;
   reporter: Reporter;
   linkedinCaption: string;
 };
@@ -185,9 +186,42 @@ type LooseDirection = {
   hook?: string;
   why?: string;
   headlines?: unknown;
+  body?: string;
   reporter?: Reporter;
   linkedinCaption?: string;
 };
+
+function fallbackBody(hook: string, headlines: string[], name?: string): string {
+  const subject = name?.trim() || "The subject";
+  const lede = `${subject} is, allegedly, the protagonist of the strangest dispatch out of MEGATHON 2026 in Amsterdam this weekend. ${hook}`;
+  const colour = `Sources inside the venue — granted anonymity because the story is, technically, made up — describe a scene of escalating absurdity on the build floor. The reporting room is treating the whole thing as the kind of founder lore that doesn't survive a Monday.`;
+  const kicker = headlines[1]
+    ? `By Sunday's main-stage finals, the working theory was simpler: ${headlines[1].toLowerCase().replace(/megathon/gi, "MEGATHON")}.`
+    : `By Sunday's main-stage finals, no one had a tidy explanation, only the footage.`;
+  return [lede, colour, kicker].join("\n\n");
+}
+
+function normalizeBody(raw: string | undefined, hook: string, headlines: string[], name?: string): string {
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed) return fallbackBody(hook, headlines, name);
+  // Collapse literal "\n" sequences that some models emit instead of real newlines.
+  const normalised = trimmed.replace(/\\n/g, "\n");
+  // If the model returned a single blob with no paragraph breaks, split on sentence-ish boundaries.
+  if (!/\n\s*\n/.test(normalised)) {
+    const sentences = normalised.split(/(?<=[.!?])\s+/).filter(Boolean);
+    if (sentences.length >= 3) {
+      const third = Math.ceil(sentences.length / 3);
+      return [
+        sentences.slice(0, third).join(" "),
+        sentences.slice(third, third * 2).join(" "),
+        sentences.slice(third * 2).join(" "),
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+    }
+  }
+  return normalised;
+}
 
 function normalizeDirection(raw: LooseDirection, idx: number): StoryDirection {
   const id = (typeof raw.id === "string" && raw.id.trim()) || ["a", "b", "c"][idx] || `d${idx}`;
@@ -201,6 +235,7 @@ function normalizeDirection(raw: LooseDirection, idx: number): StoryDirection {
   while (headlines.length < 3) headlines.push(`${hook} — MEGATHON 2026`);
 
   const reporter = normalizeReporter(raw.reporter, headlines[0] ?? hook);
+  const body = normalizeBody(raw.body, hook, headlines);
 
   const rawCaption =
     typeof raw.linkedinCaption === "string" && raw.linkedinCaption.trim().length > 0
@@ -213,6 +248,7 @@ function normalizeDirection(raw: LooseDirection, idx: number): StoryDirection {
     hook,
     why,
     headlines,
+    body,
     reporter,
     linkedinCaption: stripHashtags(rawCaption),
   };
